@@ -163,9 +163,58 @@ p:last-child { margin-bottom: 0; }
 }
 .nav a:hover { color: var(--text); }
 .topbar .btn { margin-left: 8px; }
+
+/* Section menu, phones only */
+.menu { display: none; }
+.menu summary {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(86, 90, 124, 0.6);
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+}
+.menu summary::-webkit-details-marker { display: none; }
+.menu summary svg { width: 20px; height: 20px; }
+.menu .icon-close { display: none; }
+.menu[open] .icon-open { display: none; }
+.menu[open] .icon-close { display: block; }
+.menu[open] summary { border-color: var(--cyan); color: var(--cyan); }
+.menu-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px var(--gutter) 12px;
+  background: rgba(1, 1, 29, 0.97);
+  border-bottom: 1px solid rgba(86, 90, 124, 0.5);
+}
+.menu-panel a {
+  padding: 16px 0;
+  color: var(--text);
+  text-decoration: none;
+  font: 16px/1 var(--display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(86, 90, 124, 0.3);
+}
+.menu-panel a:last-child { border-bottom: 0; }
+.menu-panel a:hover { color: var(--cyan); }
+
 @media (max-width: 760px) {
+  .topbar .container { gap: 10px; }
   .nav { display: none; }
   .topbar .btn { margin-left: auto; }
+  .menu { display: block; }
+}
+@media (max-width: 380px) {
+  .brand { font-size: 16px; }
+  .brand img { width: 30px; height: 30px; }
 }
 
 /* Hero */
@@ -256,7 +305,6 @@ section { padding: clamp(56px, 7vw, 96px) 0; }
   width: 14px;
   height: 14px;
   background: var(--shape-color, var(--cyan));
-  filter: drop-shadow(0 0 5px var(--shape-color, var(--cyan)));
 }
 .checks li:nth-child(4n+1) { --shape-color: var(--green); }
 .checks li:nth-child(4n+1)::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
@@ -408,6 +456,18 @@ section { padding: clamp(56px, 7vw, 96px) 0; }
       <a href="#studio">Studio</a>
     </nav>
     <a class="btn btn-primary btn-small" href="https://store.steampowered.com/app/3244080/CarveLight/">Wishlist</a>
+    <details class="menu">
+      <summary aria-label="Sections">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg class="icon-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </summary>
+      <nav class="menu-panel" aria-label="Sections">
+        <a href="#carvelight">CarveLight</a>
+        <a href="#media">Media</a>
+        <a href="#press">Press</a>
+        <a href="#studio">Studio</a>
+      </nav>
+    </details>
   </div>
 </header>
 
@@ -666,6 +726,23 @@ section { padding: clamp(56px, 7vw, 96px) 0; }
       });
     }, { threshold: 0.25 });
     clips.forEach(function (v) { io.observe(v); });
+  }
+
+  // Section menu closes after picking a section, on Escape, or on a click outside it
+  var menu = document.querySelector(".menu");
+  if (menu) {
+    menu.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { menu.open = false; });
+    });
+    document.addEventListener("click", function (e) {
+      if (menu.open && !menu.contains(e.target)) menu.open = false;
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && menu.open) {
+        menu.open = false;
+        menu.querySelector("summary").focus();
+      }
+    });
   }
 
   // Screenshot lightbox
