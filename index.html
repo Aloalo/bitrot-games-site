@@ -3,8 +3,698 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bitrot Games</title>
+<title>CarveLight · Bitrot Games</title>
+<meta name="description" content="CarveLight is a turn-based artillery game fought on fully destructible terrain. Pilot physics-driven cars, carve the battlefield apart, and be the last one driving. Coming April 2027 to Steam.">
+<link rel="canonical" href="https://bitrot-games.com/">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#01011d">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bitrot Games">
+<meta property="og:title" content="CarveLight by Bitrot Games">
+<meta property="og:description" content="A turn-based artillery game fought on fully destructible terrain. No health bars: drop your enemies into the void. Coming April 2027.">
+<meta property="og:url" content="https://bitrot-games.com/">
+<meta property="og:image" content="https://bitrot-games.com/assets/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="assets/fonts/Tektur-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<style>
+@font-face {
+  font-family: "Tektur";
+  src: url("assets/fonts/Tektur-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --void: #01011d;
+  --void-2: #08082c;
+  --terrain: #242537;
+  --edge: #565a7c;
+  --text: #ecebff;
+  --muted: #a6a8c9;
+  --pink: #ff2d8a;
+  --violet: #ab9dff;
+  --cyan: #3fd4ff;
+  --orange: #ffa53a;
+  --green: #5be37a;
+  --blush: #f4dfdc;
+  --beet-pink: #eb9ecd;
+  --beet-orange: #dd7240;
+  --beet: #761a44;
+  --beet-navy: #294773;
+  --display: "Tektur", "Segoe UI", system-ui, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --max: 1160px;
+  --gutter: clamp(16px, 4vw, 40px);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background-color: var(--void);
+  background-image:
+    linear-gradient(rgba(140, 145, 220, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140, 145, 220, 0.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+  color: var(--text);
+  font: 17px/1.65 var(--body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img, video { display: block; max-width: 100%; height: auto; }
+a { color: var(--cyan); text-underline-offset: 3px; }
+a:hover { color: #fff; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 4px; }
+
+.container { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.1; margin: 0; }
+h2 {
+  font-size: clamp(28px, 3.6vw, 44px);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent, var(--text));
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent, var(--violet)) 55%, transparent);
+}
+p { margin: 0 0 1em; }
+p:last-child { margin-bottom: 0; }
+
+.eyebrow {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+/* Dashed neon line, the void line from the game */
+.void-line {
+  height: 3px;
+  margin: 0;
+  border: 0;
+  background: repeating-linear-gradient(90deg, var(--pink) 0 22px, transparent 22px 34px);
+  filter: drop-shadow(0 0 6px var(--pink));
+  opacity: 0.85;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  font: 16px/1 var(--display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn-primary {
+  background: var(--pink);
+  color: #16001a;
+  box-shadow: 0 0 24px -4px var(--pink);
+}
+.btn-primary:hover { color: #16001a; transform: translateY(-1px); box-shadow: 0 0 34px 0 var(--pink); }
+.btn-ghost {
+  border: 1.5px solid var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 18px -8px var(--cyan), inset 0 0 18px -12px var(--cyan);
+}
+.btn-ghost:hover { color: #fff; background: color-mix(in srgb, var(--cyan) 14%, transparent); transform: translateY(-1px); }
+.btn-small { padding: 10px 18px; font-size: 14px; }
+
+/* Top bar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(1, 1, 29, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(86, 90, 124, 0.35);
+}
+.topbar .container { display: flex; align-items: center; gap: 24px; height: 64px; }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font: 18px/1 var(--display);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.brand img { width: 36px; height: 36px; }
+.nav { display: flex; gap: 26px; margin-left: auto; }
+.nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font: 14px/1 var(--display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.nav a:hover { color: var(--text); }
+.topbar .btn { margin-left: 8px; }
+@media (max-width: 760px) {
+  .nav { display: none; }
+  .topbar .btn { margin-left: auto; }
+}
+
+/* Hero */
+.hero-art img {
+  width: 100%;
+  height: clamp(220px, min(32.3vw, 38vh), 640px);
+  object-fit: cover;
+  object-position: 50% 62%;
+}
+.hero-body { position: relative; text-align: center; margin-top: -80px; }
+.hero h1 { margin: 0 auto; width: clamp(250px, min(38vw, 44vh), 560px); }
+.hero h1 img { width: 100%; }
+.pitch {
+  max-width: 680px;
+  margin: 6px auto 24px;
+  font-size: clamp(18px, 1.9vw, 21px);
+  line-height: 1.55;
+  color: var(--text);
+}
+.cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.meta {
+  list-style: none;
+  padding: 0;
+  margin: 30px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 28px;
+  font: 14px/1.4 var(--display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.meta strong { color: var(--text); font-weight: 400; }
+
+section { padding: clamp(56px, 7vw, 96px) 0; }
+.hero { padding: 0 0 clamp(56px, 7vw, 96px); }
+#studio { padding-top: 0; }
+
+/* Media frames */
+.frame {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid color-mix(in srgb, var(--accent, var(--violet)) 45%, transparent);
+  box-shadow: 0 0 48px -14px color-mix(in srgb, var(--accent, var(--violet)) 70%, transparent);
+}
+.frame img, .frame video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+
+/* Trailer */
+.trailer { padding-top: 0; }
+.trailer .container { max-width: 1080px; }
+.trailer .frame { --accent: var(--pink); }
+.section-head { text-align: center; margin-bottom: 36px; }
+
+/* Features */
+.features { padding-top: 24px; }
+.feature {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: clamp(28px, 5vw, 64px);
+  align-items: center;
+}
+.feature + .feature { margin-top: clamp(72px, 10vw, 128px); }
+.feature.flip { grid-template-columns: 1fr 1.3fr; }
+.feature.flip .frame { order: 2; }
+.feature h2 { margin-bottom: 20px; }
+.feature p { color: #d4d4ee; }
+@media (max-width: 860px) {
+  .feature, .feature.flip { grid-template-columns: 1fr; }
+  .feature.flip .frame { order: 0; }
+}
+
+/* What's in the box */
+.box { background: linear-gradient(180deg, transparent, rgba(36, 37, 55, 0.45) 30%, rgba(36, 37, 55, 0.45) 70%, transparent); }
+.checks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px 36px;
+}
+.checks li { display: flex; align-items: center; gap: 14px; font-size: 17px; }
+.checks li::before {
+  content: "";
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: var(--shape-color, var(--cyan));
+  filter: drop-shadow(0 0 5px var(--shape-color, var(--cyan)));
+}
+.checks li:nth-child(4n+1) { --shape-color: var(--green); }
+.checks li:nth-child(4n+1)::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.checks li:nth-child(4n+2) { --shape-color: var(--orange); }
+.checks li:nth-child(4n+3) { --shape-color: var(--cyan); }
+.checks li:nth-child(4n+3)::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.checks li:nth-child(4n+4) { --shape-color: var(--pink); }
+.checks li:nth-child(4n+4)::before { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+
+/* Screenshots */
+.shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.shots a {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(86, 90, 124, 0.5);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.shots a:hover { border-color: var(--cyan); box-shadow: 0 0 24px -6px var(--cyan); transform: translateY(-2px); }
+.shots img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+@media (max-width: 760px) { .shots { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+.lightbox {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  max-width: min(94vw, 1600px);
+  width: 100%;
+  overflow: visible;
+}
+.lightbox::backdrop { background: rgba(1, 1, 29, 0.92); }
+.lightbox img { width: 100%; border-radius: 8px; box-shadow: 0 0 60px -10px rgba(171, 157, 255, 0.5); }
+.lightbox button {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--edge);
+  background: rgba(1, 1, 29, 0.8);
+  color: var(--text);
+  font: 22px/1 var(--display);
+  cursor: pointer;
+}
+.lightbox button:hover { border-color: var(--cyan); color: var(--cyan); }
+.lb-close { top: -54px; right: 0; }
+.lb-prev { top: 50%; left: 10px; transform: translateY(-50%); }
+.lb-next { top: 50%; right: 10px; transform: translateY(-50%); }
+
+/* Closing call to action */
+.closer { text-align: center; }
+.closer p {
+  font: clamp(26px, 4vw, 46px)/1.15 var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 30px;
+}
+.closer span:nth-child(1) { color: var(--cyan); text-shadow: 0 0 18px rgba(63, 212, 255, 0.5); }
+.closer span:nth-child(2) { color: var(--orange); text-shadow: 0 0 18px rgba(255, 165, 58, 0.5); }
+.closer span:nth-child(3) { color: var(--pink); text-shadow: 0 0 18px rgba(255, 45, 138, 0.5); }
+
+/* Press */
+.press-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: start; }
+@media (max-width: 860px) { .press-grid { grid-template-columns: 1fr; } }
+.facts { margin: 0; display: grid; grid-template-columns: max-content 1fr; }
+.facts dt, .facts dd { margin: 0; padding: 13px 0; border-bottom: 1px solid rgba(86, 90, 124, 0.4); }
+.facts dt {
+  padding-right: 28px;
+  font: 13px/1.9 var(--display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+@media (max-width: 520px) {
+  .facts { grid-template-columns: 1fr; }
+  .facts dt { border-bottom: 0; padding-bottom: 0; }
+  .facts dd { padding-top: 2px; }
+}
+.card {
+  padding: 30px;
+  border-radius: 14px;
+  background: var(--void-2);
+  border: 1px solid rgba(86, 90, 124, 0.5);
+}
+.card h3 { font-size: 22px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.card p { color: #d4d4ee; }
+.card + .card { margin-top: 18px; }
+.card .btn { margin-top: 8px; }
+
+/* Studio: the beet's own palette */
+.studio-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(24px, 5vw, 64px);
+  align-items: center;
+  padding: clamp(36px, 6vw, 72px);
+  background: var(--blush);
+  color: var(--beet-navy);
+  border-top: 3px solid var(--beet);
+  border-left: 3px solid var(--beet-orange);
+  border-right: 3px solid var(--beet-pink);
+  border-bottom: 3px solid var(--beet-navy);
+}
+.studio-card img { width: clamp(110px, 16vw, 190px); }
+.studio-card h2 { color: var(--beet); text-shadow: none; margin-bottom: 18px; }
+.studio-card p { font-size: 18px; max-width: 620px; }
+.studio-card a { color: var(--beet); font-weight: 600; }
+.studio-card a:hover { color: var(--beet-orange); }
+.studio-card .eyebrow { color: var(--beet-orange); }
+.dots { position: absolute; top: 22px; right: 26px; display: flex; gap: 10px; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; }
+.team { list-style: none; padding: 0; margin: 22px 0 0; display: flex; flex-wrap: wrap; gap: 8px 28px; }
+@media (max-width: 640px) {
+  .studio-card { grid-template-columns: 1fr; text-align: left; }
+  .studio-card img { width: 110px; }
+}
+
+/* Footer */
+.footer { padding: 48px 0 56px; border-top: 1px solid rgba(86, 90, 124, 0.35); color: var(--muted); font-size: 15px; }
+.footer-grid { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 28px 48px; }
+.footer h3 {
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.footer p { margin: 0; }
+.footer a { color: var(--muted); }
+.footer a:hover { color: var(--text); }
+.footer .copy { margin-top: 36px; font-size: 13px; }
+@media (max-width: 720px) { .footer-grid { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
+
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="#top" aria-label="Bitrot Games, back to top">
+      <img src="assets/img/bitrot-circle.webp" alt="" width="128" height="128">
+      Bitrot Games
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#carvelight">CarveLight</a>
+      <a href="#media">Media</a>
+      <a href="#press">Press</a>
+      <a href="#studio">Studio</a>
+    </nav>
+    <a class="btn btn-primary btn-small" href="https://store.steampowered.com/app/3244080/CarveLight/">Wishlist</a>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero" id="carvelight">
+  <div class="hero-art">
+    <picture>
+      <source media="(max-width: 900px)" srcset="assets/img/hero-1280.webp">
+      <img src="assets/img/hero-2560.webp" alt="" width="2560" height="826" fetchpriority="high">
+    </picture>
+  </div>
+  <div class="hero-body container">
+    <h1><img src="assets/img/carvelight-logo.webp" alt="CarveLight" width="1200" height="794"></h1>
+    <p class="pitch">A turn-based artillery game for up to four players, fought over ground you're all actively destroying. Nobody has a health bar, so the only way to win is to drop your enemies into the void.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://store.steampowered.com/app/3244080/CarveLight/">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11.98 0C5.67 0 .51 4.86.03 11.04l6.44 2.66a3.38 3.38 0 0 1 1.92-.6l2.87-4.15v-.06a4.54 4.54 0 1 1 4.54 4.54h-.1l-4.09 2.92.01.17a3.4 3.4 0 0 1-6.74.68L.33 15.07A12 12 0 1 0 11.98 0ZM7.54 18.2l-1.47-.6a2.55 2.55 0 1 0 1.4-3.5l1.52.63a1.88 1.88 0 1 1-1.45 3.47Zm11.4-9.32a3.03 3.03 0 1 0-6.05 0 3.03 3.03 0 0 0 6.05 0Zm-5.3 0a2.27 2.27 0 1 1 4.55 0 2.27 2.27 0 0 1-4.55 0Z"/></svg>
+        Wishlist on Steam
+      </a>
+      <a class="btn btn-ghost" href="https://store.steampowered.com/app/3244080/CarveLight/">Play the free demo</a>
+    </div>
+    <ul class="meta">
+      <li>Coming <strong>April 2027</strong></li>
+      <li><strong>Windows · macOS · Linux</strong></li>
+      <li><strong>1–4 players</strong>, couch &amp; online</li>
+    </ul>
+  </div>
+</section>
+
+<section class="trailer" aria-labelledby="trailer-title">
+  <div class="container">
+    <div class="section-head">
+      <h2 id="trailer-title" style="--accent: var(--pink)">Trailer</h2>
+    </div>
+    <div class="frame">
+      <video controls preload="none" playsinline poster="assets/img/trailer-poster.webp" width="1920" height="1080">
+        <source src="assets/video/trailer.mp4" type="video/mp4">
+        <a href="assets/video/trailer.mp4">Download the CarveLight trailer</a>
+      </video>
+    </div>
+  </div>
+</section>
+
+<hr class="void-line">
+
+<section class="features" aria-label="Features">
+  <div class="container">
+
+    <article class="feature" style="--accent: var(--orange)">
+      <div class="frame">
+        <video class="clip" src="assets/video/destruction.mp4" poster="assets/img/destruction-poster.webp" autoplay muted loop playsinline width="1280" height="720" aria-label="Lasers carving a level apart"></video>
+      </div>
+      <div>
+        <h2>Destroy everything</h2>
+        <p>Blow up the world. Make a precision cut with the laser, or throw a Hail Mary with the laser grenade and see what's still standing once the dust settles. There is no cover here, because nothing survives being shot at.</p>
+        <p>Armored cars don't have health bars. No repairs. If you want someone gone, you take the ground out from under them.</p>
+      </div>
+    </article>
+
+    <article class="feature flip" style="--accent: var(--cyan)">
+      <div class="frame">
+        <img src="assets/img/shot5.webp" alt="Four players lining up shots across a destructible level" width="1920" height="1080" loading="lazy">
+      </div>
+      <div>
+        <h2>Bring friends to throw around</h2>
+        <p>Up to four players, online or passing a single controller around the couch. Free-for-all, or split into teams. Short a player? Hand the seat to a CPU.</p>
+        <p>Make a car fly across the map. Yours or the enemy's. Some turns you launch a rival into the void. Some turns you launch your teammate. Some turns you launch yourself, and everyone gets to watch it happen.</p>
+      </div>
+    </article>
+
+    <article class="feature" style="--accent: var(--green)">
+      <div class="frame">
+        <img src="assets/img/shot1.webp" alt="A crowded match with cars spread across a large level" width="1920" height="1080" loading="lazy">
+      </div>
+      <div>
+        <h2>Take on the machines</h2>
+        <p>Nobody around to play? The CPUs are always up for a match. Pick a gentle sparring partner while you learn the ropes, or one that spots the shot you missed and sends you into the void with it.</p>
+        <p>Scenarios stack the odds against you: a lone car against a whole squad, or you and a friend against an army. Play them alone, or bring a friend along on the couch or online.</p>
+      </div>
+    </article>
+
+    <article class="feature flip" style="--accent: var(--violet)">
+      <div class="frame">
+        <img src="assets/img/shot8.webp" alt="The in-game map editor with lighting controls" width="1920" height="1080" loading="lazy">
+      </div>
+      <div>
+        <h2>Share your maps</h2>
+        <p>Sculpt levels in the in-game editor and drop straight into a match on them without ever leaving the game. Import your own images or draw from scratch, then add lights and spawn points.</p>
+        <p>Publish the ones worth keeping to the Steam Workshop, where new arenas are one click away.</p>
+      </div>
+    </article>
+
+    <article class="feature" style="--accent: var(--pink)">
+      <div class="frame">
+        <video class="clip" src="assets/video/thrusters.mp4" poster="assets/img/thrusters-poster.webp" autoplay muted loop playsinline width="1280" height="720" aria-label="A car flying through a solo challenge on thrusters"></video>
+      </div>
+      <div>
+        <h2>Hone your skills</h2>
+        <p>Speeders wanted! Solo challenges are the hardest driving test in the game: knock every enemy car off the map as fast as you can. Finding a solution is only half the job. The other half is perfecting the execution.</p>
+        <p>Every run is scored on the global leaderboard, so there's always a name sitting one row above yours. Or skip the scoring entirely: sandbox mode hands you unlimited weapons and an empty arena to take apart however you like.</p>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section class="box" aria-labelledby="box-title">
+  <div class="container">
+    <div class="section-head">
+      <h2 id="box-title" style="--accent: var(--cyan)">What's in the box</h2>
+    </div>
+    <ul class="checks">
+      <li>Turn-based artillery for up to 4 players</li>
+      <li>Fully destructible, physics-driven terrain</li>
+      <li>Online and local couch multiplayer</li>
+      <li>Free-for-all and team matches</li>
+      <li>CPU opponents, offline and online</li>
+      <li>Scenarios to play solo or co-op</li>
+      <li>Map editor with Steam Workshop support</li>
+      <li>A dozen-plus terrain-warping weapons and tools</li>
+      <li>Full match replays</li>
+      <li>Solo challenge puzzles with leaderboards</li>
+      <li>Sandbox mode</li>
+      <li>Full controller support</li>
+    </ul>
+  </div>
+</section>
+
+<section id="media" aria-labelledby="media-title">
+  <div class="container">
+    <div class="section-head">
+      <h2 id="media-title" style="--accent: var(--violet)">Screenshots</h2>
+    </div>
+    <div class="shots">
+      <a href="assets/img/shot1.webp"><img src="assets/img/shot1-800.webp" alt="Four-player match on a large level" width="800" height="450" loading="lazy"></a>
+      <a href="assets/img/shot2.webp"><img src="assets/img/shot2-800.webp" alt="Lasers slicing through terrain" width="800" height="450" loading="lazy"></a>
+      <a href="assets/img/shot3.webp"><img src="assets/img/shot3-800.webp" alt="A car flying on thrusters" width="800" height="450" loading="lazy"></a>
+      <a href="assets/img/shot4.webp"><img src="assets/img/shot4-800.webp" alt="Girders spreading across a challenge level" width="800" height="450" loading="lazy"></a>
+      <a href="assets/img/shot5.webp"><img src="assets/img/shot5-800.webp" alt="Aiming a shot with the trajectory preview" width="800" height="450" loading="lazy"></a>
+      <a href="assets/img/shot6.webp"><img src="assets/img/shot6-800.webp" alt="A laser cutting a long line through the level" width="800" height="450" loading="lazy"></a>
+      <a href="assets/img/shot7.webp"><img src="assets/img/shot7-800.webp" alt="A solo challenge lit in coloured lights" width="800" height="450" loading="lazy"></a>
+      <a href="assets/img/shot8.webp"><img src="assets/img/shot8-800.webp" alt="The map editor" width="800" height="450" loading="lazy"></a>
+    </div>
+  </div>
+</section>
+
+<dialog class="lightbox" id="lightbox" aria-label="Screenshot viewer">
+  <img src="" alt="">
+  <button class="lb-close" type="button" aria-label="Close">×</button>
+  <button class="lb-prev" type="button" aria-label="Previous screenshot">‹</button>
+  <button class="lb-next" type="button" aria-label="Next screenshot">›</button>
+</dialog>
+
+<section class="closer">
+  <div class="container">
+    <p><span>Carve.</span> <span>Detonate.</span> <span>Last one driving wins.</span></p>
+    <a class="btn btn-primary" href="https://store.steampowered.com/app/3244080/CarveLight/">Wishlist on Steam</a>
+  </div>
+</section>
+
+<hr class="void-line">
+
+<section id="press" aria-labelledby="press-title">
+  <div class="container">
+    <div class="section-head">
+      <h2 id="press-title" style="--accent: var(--orange)">Press</h2>
+    </div>
+    <div class="press-grid">
+      <dl class="facts">
+        <dt>Developer</dt><dd>Bitrot Games, Zagreb, Croatia</dd>
+        <dt>Release</dt><dd>April 2027</dd>
+        <dt>Platforms</dt><dd>Windows, macOS, Linux</dd>
+        <dt>Store</dt><dd><a href="https://store.steampowered.com/app/3244080/CarveLight/">Steam</a> (free demo available)</dd>
+        <dt>Players</dt><dd>1–4, local and online, versus and co-op</dd>
+        <dt>Languages</dt><dd>English, French, German, Spanish, Japanese, Brazilian Portuguese, Russian, Simplified Chinese</dd>
+      </dl>
+      <div>
+        <div class="card">
+          <h3>Press kit</h3>
+          <p>Logos, key art, screenshots, gameplay clips, the trailer and the fact sheet.</p>
+          <a class="btn btn-ghost btn-small" href="https://drive.google.com/drive/folders/17l8h3U9fu5X7EPHTraTb5BgG3Z601AMM">Open press kit</a>
+        </div>
+        <div class="card">
+          <h3>Press &amp; creators</h3>
+          <p>For interviews, coverage and content creator enquiries, write to <a href="mailto:press@bitrot-games.com">press@bitrot-games.com</a>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="studio" aria-labelledby="studio-title">
+  <div class="container">
+    <div class="studio-card">
+      <div class="dots" aria-hidden="true">
+        <i style="background: var(--beet-pink)"></i><i style="background: var(--beet-orange)"></i><i style="background: var(--beet)"></i><i style="background: var(--beet-navy)"></i>
+      </div>
+      <img src="assets/img/bitrot-beet.webp" alt="Bitrot Games logo: a beetroot with the letters BR in its leaves" width="328" height="640" loading="lazy">
+      <div>
+        <div class="eyebrow">The studio</div>
+        <h2 id="studio-title">Bitrot Games</h2>
+        <p>We're a small independent studio from Zagreb, Croatia. CarveLight is built on our own engine, made for one job: blowing up terrain and throwing cars around.</p>
+        <ul class="team">
+          <li><a href="https://x.com/jure_ratkovic">Jure Ratkovic</a></li>
+          <li><a href="https://x.com/ikrpelnik1">Ivan Krpelnik</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h3>BITROT d.o.o.</h3>
+        <p>Ulica Gustava Krkleca 38<br>10000 Zagreb, Croatia</p>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <p>Support: <a href="mailto:support@bitrot-games.com">support@bitrot-games.com</a><br>Press: <a href="mailto:press@bitrot-games.com">press@bitrot-games.com</a></p>
+      </div>
+      <div>
+        <h3>Follow</h3>
+        <p><a href="https://store.steampowered.com/app/3244080/CarveLight/">CarveLight on Steam</a><br><a href="https://x.com/jure_ratkovic">Jure on X</a> · <a href="https://x.com/ikrpelnik1">Ivan on X</a></p>
+      </div>
+    </div>
+    <p class="copy">© 2026 Bitrot Games. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Gameplay loops play only while visible, and not at all with reduced motion
+  var clips = document.querySelectorAll("video.clip");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  clips.forEach(function (v) {
+    if (reduce) {
+      v.removeAttribute("autoplay");
+      v.pause();
+      v.controls = true;
+    }
+  });
+  if (!reduce && "IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          var p = e.target.play();
+          if (p && p.catch) p.catch(function () {});
+        } else {
+          e.target.pause();
+        }
+      });
+    }, { threshold: 0.25 });
+    clips.forEach(function (v) { io.observe(v); });
+  }
+
+  // Screenshot lightbox
+  var dlg = document.getElementById("lightbox");
+  if (!dlg || !dlg.showModal) return;
+  var links = Array.prototype.slice.call(document.querySelectorAll(".shots a"));
+  var img = dlg.querySelector("img");
+  var index = 0;
+  function show(i) {
+    index = (i + links.length) % links.length;
+    img.src = links[index].getAttribute("href");
+    img.alt = links[index].querySelector("img").alt;
+  }
+  links.forEach(function (a, i) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      show(i);
+      dlg.showModal();
+    });
+  });
+  dlg.querySelector(".lb-close").addEventListener("click", function () { dlg.close(); });
+  dlg.querySelector(".lb-prev").addEventListener("click", function () { show(index - 1); });
+  dlg.querySelector(".lb-next").addEventListener("click", function () { show(index + 1); });
+  dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft") show(index - 1);
+    if (e.key === "ArrowRight") show(index + 1);
+  });
+})();
+</script>
 </body>
 </html>
